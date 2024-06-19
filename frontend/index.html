@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoo Animals</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input[type="text"], input[type="number"] {
+            padding: 8px;
+            margin: 5px;
+        }
+        button {
+            padding: 8px 15px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Zoo Animals</h1>
+    
+    <form id="animal-form">
+        <input type="hidden" id="animal-id">
+        <input type="text" id="animal-type" placeholder="Type (e.g., Lion, Zebra)" required>
+        <input type="number" id="animal-age" placeholder="Age" required>
+        <input type="text" id="animal-name" placeholder="Name" required>
+        <button type="submit">Add/Update Animal</button>
+    </form>
+
+    <table id="animals-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Age</th>
+                <th>Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+        const apiUrl = 'http://127.0.0.1:5000';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchAnimals();
+        });
+
+        document.getElementById('animal-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = document.getElementById('animal-id').value;
+            const type = document.getElementById('animal-type').value;
+            const age = document.getElementById('animal-age').value;
+            const name = document.getElementById('animal-name').value;
+
+            if (id) {
+                updateAnimal(id, { type, age, name });
+            } else {
+                addAnimal({ type, age, name });
+            }
+
+            document.getElementById('animal-form').reset();
+        });
+
+        function fetchAnimals() {
+            axios.get(`${apiUrl}/get_all_animals`)
+                .then(response => {
+                    const animals = response.data;
+                    const tbody = document.querySelector('#animals-table tbody');
+                    tbody.innerHTML = '';
+                    animals.forEach(animal => {
+                        const row = `<tr>
+                            <td>${animal.id}</td>
+                            <td>${animal.type}</td>
+                            <td>${animal.age}</td>
+                            <td>${animal.name}</td>
+                            <td>
+                                <button onclick="editAnimal(${animal.id})">Edit</button>
+                                <button onclick="deleteAnimal(${animal.id})">Delete</button>
+                            </td>
+                        </tr>`;
+                        tbody.insertAdjacentHTML('beforeend', row);
+                    });
+                })
+                .catch(error => console.error(error));
+        }
+
+        function addAnimal(animal) {
+            axios.post(`${apiUrl}/new_animal`, animal)
+                .then(response => {
+                    fetchAnimals();
+                })
+                .catch(error => console.error(error));
+        }
+
+        function editAnimal(id) {
+            axios.get(`${apiUrl}/get_animal/${id}`)
+                .then(response => {
+                    const animal = response.data;
+                    document.getElementById('animal-id').value = animal.id;
+                    document.getElementById('animal-type').value = animal.type;
+                    document.getElementById('animal-age').value = animal.age;
+                    document.getElementById('animal-name').value = animal.name;
+                })
+                .catch(error => console.error(error));
+        }
+
+        function updateAnimal(id, animal) {
+            axios.put(`${apiUrl}/update_animal/${id}`, animal)
+                .then(response => {
+                    fetchAnimals();
+                })
+                .catch(error => console.error(error));
+        }
+
+        function deleteAnimal(id) {
+            axios.delete(`${apiUrl}/delete_animal/${id}`)
+                .then(response => {
+                    fetchAnimals();
+                })
+                .catch(error => console.error(error));
+        }
+    </script>
+
+</body>
+</html>
